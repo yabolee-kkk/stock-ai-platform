@@ -1,0 +1,264 @@
+version: '3.8'
+
+services:
+  # 数据库服务
+  postgres:
+    image: postgres:14-alpine
+    container_name: stockai-postgres
+    environment:
+      POSTGRES_USER: stockai
+      POSTGRES_PASSWORD: stockai_password
+      POSTGRES_DB: stockai_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - stockai-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: stockai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - stockai-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TimescaleDB (时序数据库)
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    container_name: stockai-timescaledb
+    environment:
+      POSTGRES_USER: stockai
+      POSTGRES_PASSWORD: stockai_password
+      POSTGRES_DB: stockai_timeseries
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+    networks:
+      - stockai-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO对象存储
+  minio:
+    image: minio/minio:latest
+    container_name: stockai-minio
+    environment:
+      MINIO_ROOT_USER: stockaiadmin
+      MINIO_ROOT_PASSWORD: stockaiadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - stockai-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # RabbitMQ消息队列
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: stockai-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: stockai
+      RABBITMQ_DEFAULT_PASS: stockai_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - stockai-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # API网关 (开发环境)
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile.dev
+    container_name: stockai-api-gateway
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://stockai:stockai_password@postgres:5432/stockai_platform
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: development_secret_change_in_production
+    networks:
+      - stockai-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  # 用户服务 (开发环境)
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile.dev
+    container_name: stockai-user-service
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      SERVICE_NAME: user-service
+      DATABASE_URL: postgresql://stockai:stockai_password@postgres:5432/stockai_platform
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: development_secret_change_in_production
+    networks:
+      - stockai-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  # 数据服务 (开发环境)
+  data-service:
+    build:
+      context: ./services/data-service
+      dockerfile: Dockerfile.dev
+    container_name: stockai-data-service
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./services/data-service:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      SERVICE_NAME: data-service
+      DATABASE_URL: postgresql://stockai:stockai_password@postgres:5432/stockai_platform
+      TIMESCALE_URL: postgresql://stockai:stockai_password@timescaledb:5432/stockai_timeseries
+      REDIS_URL: redis://redis:6379
+    networks:
+      - stockai-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  # 门户网站 (开发环境)
+  portal-web:
+    build:
+      context: ./web/portal
+      dockerfile: Dockerfile.dev
+    container_name: stockai-portal-web
+    ports:
+      - "8080:3000"
+    volumes:
+      - ./web/portal:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      REACT_APP_API_URL: http://localhost:3000/api
+    networks:
+      - stockai-network
+    command: npm start
+
+  # 管理后台 (开发环境)
+  admin-web:
+    build:
+      context: ./web/admin
+      dockerfile: Dockerfile.dev
+    container_name: stockai-admin-web
+    ports:
+      - "8081:3000"
+    volumes:
+      - ./web/admin:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      REACT_APP_API_URL: http://localhost:3000/api/admin
+    networks:
+      - stockai-network
+    command: npm start
+
+  # 监控栈 (可选)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: stockai-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - stockai-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: stockai-grafana
+    ports:
+      - "3003:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./infrastructure/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - stockai-network
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  redis_data:
+  timescaledb_data:
+  minio_data:
+  rabbitmq_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  stockai-network:
+    driver: bridge

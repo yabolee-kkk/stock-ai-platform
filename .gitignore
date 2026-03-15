@@ -1,0 +1,280 @@
+# Dependencies
+node_modules/
+.yarn/
+.pnpm/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build output
+dist/
+build/
+out/
+.next/
+.nuxt/
+.gatsby/
+
+# Coverage directory
+coverage/
+.nyc_output/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+*.runtime
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.test
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# VuePress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Docker
+Dockerfile.dev
+docker-compose.override.yml
+
+# Local development files
+local.env
+.development/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.backup
+*.bak
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+
+# Certificates
+*.pem
+*.crt
+*.key
+
+# Docker volumes
+**/data/
+**/volumes/
+
+# TimescaleDB data
+timescaledb_data/
+
+# MinIO data
+minio_data/
+
+# Redis data
+redis_data/
+
+# PostgreSQL data
+postgres_data/
+
+# RabbitMQ data
+rabbitmq_data/
+
+# Prometheus data
+prometheus_data/
+
+# Grafana data
+grafana_data/
+
+# Development configuration
+config/development.json
+config/test.json
+
+# Production secrets (should be in environment variables)
+config/production.json
+
+# Application logs
+*.log
+logs/
+
+# Test output
+test-results/
+test-reports/
+
+# Package lock files (we use yarn or pnpm)
+package-lock.json
+npm-shrinkwrap.json
+
+# Build artifacts
+dist/
+build/
+*.min.js
+*.min.css
+
+# Source maps
+*.map
+
+# Docker compose override
+docker-compose.override.yml
+
+# Local development overrides
+docker-compose.local.yml
+
+# Temporary uploads
+uploads/
+tmp/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environment
+venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Pytest
+.pytest_cache/
+
+# Coverage.py
+.coverage
+htmlcov/
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

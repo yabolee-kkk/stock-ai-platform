@@ -1,0 +1,65 @@
+{
+  "name": "stock-ai-platform",
+  "version": "0.1.0",
+  "description": "智能股票投资助手平台 - 云端SaaS服务",
+  "private": true,
+  "workspaces": [
+    "services/*",
+    "web/*",
+    "api-gateway",
+    "shared"
+  ],
+  "scripts": {
+    "setup": "npm install && npm run setup:services",
+    "setup:services": "npm run setup --workspaces",
+    "dev": "docker-compose up -d && npm run dev:services",
+    "dev:services": "npm run dev --workspaces",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "type-check": "npm run type-check --workspaces",
+    "clean": "rm -rf node_modules && npm run clean --workspaces",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "db:migrate": "node scripts/db-migrate.js",
+    "db:seed": "node scripts/db-seed.js",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-prettier": "^5.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "stock",
+    "investment",
+    "ai",
+    "assistant",
+    "openclaw",
+    "saas",
+    "typescript",
+    "react"
+  ],
+  "author": "StockAI Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stockai/stock-ai-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stockai/stock-ai-platform/issues"
+  },
+  "homepage": "https://stockai.example.com"
+}
