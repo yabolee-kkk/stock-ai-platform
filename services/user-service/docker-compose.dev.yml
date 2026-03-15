@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: stockai-user-postgres
+    environment:
+      POSTGRES_USER: stockai
+      POSTGRES_PASSWORD: stockai_password
+      POSTGRES_DB: stockai_user_service
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stockai-network
+
+  # Redis缓存
+  redis:
+    image: redis:6-alpine
+    container_name: stockai-user-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stockai-network
+
+  # 用户服务
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: stockai-user-service
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://stockai:stockai_password@postgres:5432/stockai_user_service
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: development_jwt_secret_change_in_production
+      JWT_ACCESS_EXPIRY: 15m
+      JWT_REFRESH_EXPIRY: 7d
+      JWT_ISSUER: stock-ai-platform-dev
+      BCRYPT_SALT_ROUNDS: 10
+      LOG_LEVEL: debug
+      CORS_ORIGIN: http://localhost:3000,http://localhost:8080,http://localhost:5173
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - stockai-network
+    command: npm run dev
+
+  # pgAdmin (数据库管理)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: stockai-user-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@stockai.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - stockai-network
+
+  # Redis Commander (Redis管理)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: stockai-user-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - stockai-network
+
+networks:
+  stockai-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
